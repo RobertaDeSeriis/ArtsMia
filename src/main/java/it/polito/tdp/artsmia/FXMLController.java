@@ -7,11 +7,13 @@ package it.polito.tdp.artsmia;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.artsmia.model.ArtObject;
 import it.polito.tdp.artsmia.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Labeled;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
@@ -47,14 +49,34 @@ public class FXMLController {
     
     @FXML
     void doAnalizzaOggetti(ActionEvent event) {
-
+    	this.model.creaGrafo();
+    	txtResult.appendText("Grafo creato");
+    	txtResult.appendText("# Vertici: " +this.model.nVertici());
+    	txtResult.appendText("# Archi: " +this.model.nArchi());
     }
 
     @FXML
     void doCalcolaComponenteConnessa(ActionEvent event) {
 
+    	int objectId; 
+    	try {
+			objectId= Integer.parseInt(txtObjectId.getText());
+    	}
+    	catch (NumberFormatException e) {
+    		txtResult.appendText("Devi inserire un codice numerico!");
+    		return; 
+    	}
+    
+    
+    //todo controllare che l'id corrisponda ad un vertice
+    ArtObject vertice= this.model.getObject(objectId);
+    if(vertice==null) {
+    	txtResult.appendText("Oggetto inesistente!");
+    	return; 
     }
-
+    int size= this.model.getComponenteConnessa(vertice); 
+    txtResult.appendText("Size: " +size);
+    }
     @FXML
     void doCercaOggetti(ActionEvent event) {
 
