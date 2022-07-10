@@ -28,7 +28,7 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxLUN"
-    private ChoiceBox<?> boxLUN; // Value injected by FXMLLoader
+    private ChoiceBox<Integer> boxLUN; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnCalcolaComponenteConnessa"
     private Button btnCalcolaComponenteConnessa; // Value injected by FXMLLoader
@@ -49,33 +49,42 @@ public class FXMLController {
     
     @FXML
     void doAnalizzaOggetti(ActionEvent event) {
-    	this.model.creaGrafo();
-    	txtResult.appendText("Grafo creato");
-    	txtResult.appendText("# Vertici: " +this.model.nVertici());
-    	txtResult.appendText("# Archi: " +this.model.nArchi());
+    txtResult.clear();
+    txtResult.appendText(model.creaGrafo());
+    	this.btnCalcolaComponenteConnessa.setDisable(false);
+    	this.boxLUN.setDisable(false);
+    	this.btnCercaOggetti.setDisable(false);
+    	this.txtObjectId.setDisable(false);
+    	
+    	
     }
 
     @FXML
     void doCalcolaComponenteConnessa(ActionEvent event) {
-
-    	int objectId; 
+    	
+    	txtResult.clear();
+    	Integer id=null;  
     	try {
-			objectId= Integer.parseInt(txtObjectId.getText());
+    		id= Integer.parseInt(this.txtObjectId.getText());
     	}
-    	catch (NumberFormatException e) {
-    		txtResult.appendText("Devi inserire un codice numerico!");
-    		return; 
+    	catch(NumberFormatException e){
+    		txtResult.appendText("Inserire un ObjectId valido:");
     	}
-    
-    
-    //todo controllare che l'id corrisponda ad un vertice
-    ArtObject vertice= this.model.getObject(objectId);
-    if(vertice==null) {
-    	txtResult.appendText("Oggetto inesistente!");
-    	return; 
-    }
-    int size= this.model.getComponenteConnessa(vertice); 
-    txtResult.appendText("Size: " +size);
+    	
+    	ArtObject vertice= this.model.getOgg(id); 
+    	if (vertice==null) {
+    		txtResult.appendText("L'oggetto selezionato non esiste");
+    		return; //non funziona non esce, invece dovrebbe
+    	}
+    	
+    	int size= model.getAdiacenti(vertice).size();
+    	if(size!=1) {
+    	txtResult.appendText("Dimensione componente connessa pari a: "+size);
+    	}
+    	else {
+    		txtResult.appendText("Seleziona un ObjectId esistente");
+    	}
+    	
     }
     @FXML
     void doCercaOggetti(ActionEvent event) {
@@ -95,5 +104,9 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.btnCalcolaComponenteConnessa.setDisable(true);
+    	this.boxLUN.setDisable(true);
+    	this.btnCercaOggetti.setDisable(true);
+    	this.txtObjectId.setDisable(true);
     }
 }

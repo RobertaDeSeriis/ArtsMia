@@ -1,5 +1,7 @@
 package it.polito.tdp.artsmia.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +10,9 @@ import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
@@ -16,77 +20,43 @@ import it.polito.tdp.artsmia.db.ArtsmiaDAO;
 
 public class Model {
 
+	ArtsmiaDAO dao; 
+	Graph<ArtObject, DefaultWeightedEdge> grafo;
+	List<ArtObject> oggetti; 
+	Map <Integer, ArtObject> idMap; 
 	
-	private Graph <ArtObject, DefaultWeightedEdge> grafo;
-	private ArtsmiaDAO dao; 
-	//Identity Map, mantiene la corrispondenza tra l'id dell'oggetto e l'oggetto stesso
-	private Map <Integer, ArtObject> idMap; 	
+	public Model() {
+		super();
+		this.dao= new ArtsmiaDAO(); 
+	} 
 	
-			public Model() {
-				dao= new ArtsmiaDAO(); //conviene crearlo qui			
-				idMap= new HashMap <Integer, ArtObject>(); 
-			}
-			
-			//il grafo viene ogni volta creato da 0, così siamo sicuri che sia pulito
-			public void creaGrafo() {
-				grafo= new SimpleWeightedGraph<>(DefaultWeightedEdge.class); 	
-			
-			//AGGIUNGO VERTICI
-			dao.listObject(idMap);
-			Graphs.addAllVertices(this.grafo, idMap.values()); 
-			
-			
-			//AGGIUNGO VERTICI
-			
-			//PER PIù DI 30 VERTICI IL METODO 1 NON CONVIENE
-		/*	for (ArtObject a1: this.grafo.vertexSet()) {
-				for(ArtObject a2: this.grafo.vertexSet()) {
-					//se i 2 vertici sono diversi e se non c'è già un arco
-					if(!a1.equals(a2) && !this.grafo.containsEdge(a1, a2)){
-						//chiedo al db se devo collegare a1 e a2
-						int peso= dao.getPeso(a1,a2);
-								//se il peso è maggiore di 0
-								if (peso>0) {
-									Graphs.addEdgeWithVertices(this.grafo, a1, a2, peso);
-								}
-							}		
-						}
-					}
-			*/
-			
-			//APPROCCIO 2
-			for (CoppiaId c: this.dao.getCopppiaId(idMap)) {
-				Graphs.addEdgeWithVertices(this.grafo, c.getA1(),c.getA2(), c.getPeso()); 
-			}
-			
-			
-			/*System.out.println("Grafo creato!");
-			System.out.println("Vertici:"+this.grafo.vertexSet().size());
-			System.out.println("Archi:"+this.grafo.edgeSet().size());
-			*/
-			}
-			
-		public int nVertici() {
-			return this.grafo.vertexSet().size(); 
+	public String creaGrafo() {
+		this.grafo= new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+		
+		idMap= new HashMap<>();
+		this.oggetti= dao.getVertici(idMap);
+		Graphs.addAllVertices(this.grafo, this.oggetti);
+		
+		for (Adiacenza a: dao.getArchi(idMap)) {
+			Graphs.addEdge(this.grafo, a.getA1(),a.getA2(), a.getPeso());
 		}
 		
-		public int nArchi() {
-			return this.grafo.edgeSet().size(); 
-		}
+		return "Grafo creato con " +this.grafo.vertexSet().size()+ " vertici e "
+		+ this.grafo.edgeSet().size()+ " archi";
+		
+	}
 
-		public int getComponenteConnessa(ArtObject vertice) {
-			Set<ArtObject> visitati= new HashSet<>(); 
-			DepthFirstIterator<ArtObject, DefaultWeightedEdge> it= new DepthFirstIterator<ArtObject, DefaultWeightedEdge> (this.grafo, vertice); 
-			
-			while(it.hasNext()) {
-				visitati.add(it.next());
-			}
-			
-			//connectoringSector.
-			return visitati.size();
-		}
-		
-		public ArtObject getObject(int objectId) {
-			return idMap.get(objectId);
-		}
+	public ArtObject getOgg(int id) {
+		return idMap.get(id); //restituisce l'oggetto corrispondente dato l'id
+	}
+	
+	public List<ArtObject> getAdiacenti(ArtObject a) { 
+		//COMPONENTE CONNESSA
+		ConnectivityInspector<ArtObject, DefaultWeightedEdge> ci = new ConnectivityInspector<>(grafo);
+		List<ArtObject> oggettiConn = new ArrayList<>(ci.connectedSetOf(a)); //torna la componente connessa a partire da a
+		//actors.remove(actorsConnessi.get(0));
+		return oggettiConn;
+	}
+	
+	
 	}
